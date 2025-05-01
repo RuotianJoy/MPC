@@ -1,0 +1,11 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://example.org/Interest2> a <http://example.org/Interest> ;
+    rdfs:label "旅游" .
+
+<http://example.org/Interest3> a <http://example.org/Interest> ;
+    rdfs:label "摄影" .
+
+<http://example.org/Interest4> a <http://example.org/Interest> ;
+    rdfs:label "音乐" .
+

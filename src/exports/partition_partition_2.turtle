@@ -1,0 +1,18 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ns1: <http://example.org/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ns1:City1 rdfs:label "北京" ;
+    ns1:hasAttraction ns1:Attraction1,
+        ns1:Attraction2 ;
+    ns1:population "2100万" .
+
+ns1:Company1 rdfs:label "科技有限公司" ;
+    ns1:foundedIn "2005" .
+
+ns1:Person2 ns1:hasInterest ns1:Interest3 ;
+    ns1:worksAt ns1:Company2 ;
+    foaf:age "32" ;
+    foaf:knows ns1:Person1 ;
+    foaf:name "李四" .
+

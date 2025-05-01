@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPC算法可视化</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .jumbotron {
+            padding: 2rem;
+            margin-bottom: 2rem;
+            background-color: #e9ecef;
+            border-radius: 0.3rem;
+        }
+        .upload-box {
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            background-color: #f8f9fa;
+        }
+        .upload-box:hover {
+            border-color: #0d6efd;
+            background-color: #f1f8ff;
+        }
+        .or-divider {
+            text-align: center;
+            position: relative;
+            margin: 20px 0;
+        }
+        .or-divider::before, .or-divider::after {
+            content: "";
+            display: inline-block;
+            width: 40%;
+            height: 1px;
+            background-color: #ccc;
+            position: relative;
+            vertical-align: middle;
+        }
+        .or-divider span {
+            display: inline-block;
+            padding: 0 15px;
+            font-weight: bold;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">MPC算法可视化</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="jumbotron">
+            <h1>最小属性切割(MPC) RDF图分区</h1>
+            <p class="lead">
+                上传RDF文件或使用我们的示例数据来可视化并通过MPC算法进行分区。
+            </p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>上传RDF数据</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="/upload" method="post" enctype="multipart/form-data">
+                            <div class="upload-box">
+                                <label for="file" class="form-label">
+                                    <h5>拖放RDF文件或点击选择</h5>
+                                    <p>支持的格式: TTL, RDF, OWL, NT, N3, JSONLD</p>
+                                </label>
+                                <input type="file" id="file" name="file" class="form-control" style="display: none;">
+                                <button type="button" id="browse-btn" class="btn btn-primary mt-3">浏览文件</button>
+                            </div>
+                            <div id="file-info" class="mt-3" style="display: none;">
+                                <div class="alert alert-success">
+                                    <strong>已选文件:</strong> <span id="file-name"></span>
+                                </div>
+                                <button type="submit" class="btn btn-success">上传并处理</button>
+                            </div>
+                        </form>
+                        
+                        <div class="or-divider">
+                            <span>或</span>
+                        </div>
+                        
+                        <div class="text-center">
+                            <h5 class="mb-3">使用示例数据</h5>
+                            <p>没有RDF文件？试试我们的示例数据，它能有效地展示MPC算法的功能。</p>
+                            <a href="/load_sample" class="btn btn-info">加载示例数据</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>关于MPC算法</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            最小属性切割(MPC)算法通过最小化跨分区边界切割的属性数量来对RDF图进行分区。
+                        </p>
+                        <p>
+                            这种方法对SPARQL查询处理特别有效，因为它减少了昂贵的跨分区连接操作的需求。
+                        </p>
+                        <h6>主要特点:</h6>
+                        <ul>
+                            <li>属性感知分区</li>
+                            <li>分区大小平衡控制</li>
+                            <li>迭代优化</li>
+                            <li>整个过程的可视化</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light py-3 mt-5">
+        <div class="container text-center">
+            <p>MPC算法实现 &copy; 2023</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('file');
+            const browseBtn = document.getElementById('browse-btn');
+            const uploadBox = document.querySelector('.upload-box');
+            const fileInfo = document.getElementById('file-info');
+            const fileName = document.getElementById('file-name');
+
+            // 点击浏览按钮时触发隐藏的文件输入
+            browseBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // 处理文件选择
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    fileName.textContent = fileInput.files[0].name;
+                    fileInfo.style.display = 'block';
+                }
+            });
+
+            // 处理拖放
+            uploadBox.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadBox.classList.add('bg-light');
+            });
+
+            uploadBox.addEventListener('dragleave', function() {
+                uploadBox.classList.remove('bg-light');
+            });
+
+            uploadBox.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadBox.classList.remove('bg-light');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    fileInput.files = e.dataTransfer.files;
+                    fileName.textContent = fileInput.files[0].name;
+                    fileInfo.style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

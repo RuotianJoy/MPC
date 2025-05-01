@@ -1,0 +1,9 @@
+@prefix ns1: <http://example.org/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ns1:City2 rdfs:label "上海" ;
+    ns1:hasAttraction ns1:Attraction3 ;
+    ns1:population "2400万" .
+
+ns1:Interest1 rdfs:label "读书" .
+

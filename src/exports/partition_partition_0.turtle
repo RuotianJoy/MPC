@@ -1,0 +1,81 @@
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ns1: <http://example.org/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ns1:Attraction1 a ns1:Attraction ;
+    rdfs:label "长城" ;
+    ns1:locatedIn ns1:City1 ;
+    dc:description "世界文化遗产" .
+
+ns1:Attraction2 a ns1:Attraction ;
+    rdfs:label "故宫" ;
+    ns1:locatedIn ns1:City1 ;
+    dc:description "中国明清两代的皇家宫殿" .
+
+ns1:Attraction3 a ns1:Attraction ;
+    rdfs:label "外滩" ;
+    ns1:locatedIn ns1:City2 ;
+    dc:description "上海市中心的一个著名旅游景点" .
+
+ns1:Attraction4 a ns1:Attraction ;
+    rdfs:label "珠江" ;
+    ns1:locatedIn ns1:City3 ;
+    dc:description "中国第三长河" .
+
+ns1:Company2 a ns1:Company ;
+    rdfs:label "金融服务公司" ;
+    ns1:foundedIn "1998" ;
+    ns1:locatedIn ns1:City1 .
+
+ns1:Person1 a foaf:Person ;
+    ns1:hasInterest ns1:Interest1,
+        ns1:Interest2 ;
+    ns1:livesIn ns1:City1 ;
+    ns1:worksAt ns1:Company1 ;
+    foaf:age "28" ;
+    foaf:knows ns1:Person2,
+        ns1:Person3 ;
+    foaf:name "张三" .
+
+ns1:Person5 a foaf:Person ;
+    ns1:hasInterest ns1:Interest1,
+        ns1:Interest2,
+        ns1:Interest4 ;
+    ns1:livesIn ns1:City3 ;
+    ns1:worksAt ns1:Company3 ;
+    foaf:age "50" ;
+    foaf:knows ns1:Person4 ;
+    foaf:name "钱七" .
+
+ns1:Company1 a ns1:Company ;
+    ns1:locatedIn ns1:City1 .
+
+ns1:Company3 a ns1:Company ;
+    rdfs:label "媒体集团" ;
+    ns1:foundedIn "2010" ;
+    ns1:locatedIn ns1:City2 .
+
+ns1:Person2 a foaf:Person ;
+    ns1:hasInterest ns1:Interest2 ;
+    ns1:livesIn ns1:City1 ;
+    foaf:knows ns1:Person4 .
+
+ns1:Person3 a foaf:Person ;
+    ns1:hasInterest ns1:Interest1,
+        ns1:Interest4 ;
+    ns1:livesIn ns1:City2 ;
+    ns1:worksAt ns1:Company1 ;
+    foaf:age "45" ;
+    foaf:knows ns1:Person4 ;
+    foaf:name "王五" .
+
+ns1:Person4 a foaf:Person ;
+    ns1:hasInterest ns1:Interest4 ;
+    ns1:livesIn ns1:City2 ;
+    ns1:worksAt ns1:Company3 ;
+    foaf:age "25" ;
+    foaf:knows ns1:Person2,
+        ns1:Person3 ;
+    foaf:name "赵六" .
+

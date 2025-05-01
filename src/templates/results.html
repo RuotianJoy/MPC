@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPC算法结果</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .jumbotron {
+            padding: 2rem;
+            margin-bottom: 2rem;
+            background-color: #e9ecef;
+            border-radius: 0.3rem;
+        }
+        .visualization-container {
+            height: 500px;
+            width: 100%;
+        }
+        .animation-container {
+            height: 600px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">MPC算法可视化</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/results">结果</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="jumbotron">
+            <h1>MPC算法结果</h1>
+            <p class="lead">
+                MPC算法的结果，共 {{ num_partitions }} 个分区{% if alpha %}，α={{ alpha }}{% endif %}。
+            </p>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>分区图可视化</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="graph-container" class="visualization-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>分区指标</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                总切割属性数
+                                <span class="badge bg-primary rounded-pill">{{ metrics.total_cut_properties }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                唯一切割属性数
+                                <span class="badge bg-primary rounded-pill">{{ metrics.unique_cut_properties }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                平衡比率
+                                <span class="badge bg-primary rounded-pill">{{ "%.2f"|format(metrics.balance_ratio) }}</span>
+                            </li>
+                        </ul>
+
+                        <h6 class="mt-3">分区大小</h6>
+                        <ul class="list-group">
+                            {% for size in metrics.partition_sizes %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    分区 {{ loop.index0 }}
+                                    <span class="badge bg-primary rounded-pill">{{ size }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5>导出分区</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="/export" method="post">
+                            <div class="mb-3">
+                                <label for="export_dir" class="form-label">导出目录</label>
+                                <input type="text" class="form-control" id="export_dir" name="export_dir" value="exports">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="filename" class="form-label">基本文件名</label>
+                                <input type="text" class="form-control" id="filename" name="filename" value="partition">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="format" class="form-label">格式</label>
+                                <select class="form-select" id="format" name="format">
+                                    <option value="turtle">Turtle</option>
+                                    <option value="xml">RDF/XML</option>
+                                    <option value="n3">N3</option>
+                                    <option value="nt">N-Triples</option>
+                                    <option value="jsonld">JSON-LD</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success w-100">导出分区</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>分区大小</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="size-container" class="visualization-container"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>主要切割属性</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="cuts-container" class="visualization-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>优化历史</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="history-container" class="visualization-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>迭代过程动画</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="iteration-container" class="animation-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light py-3 mt-5">
+        <div class="container text-center">
+            <p>MPC算法实现 &copy; 2023</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化可视化
+            try {
+                console.log("初始化图可视化");
+                const graphJSON = JSON.parse('{{ graph_json|safe }}');
+                console.log("图数据解析成功");
+                const graphContainer = document.getElementById('graph-container');
+                if (!graphContainer) {
+                    console.error("找不到图容器");
+                } else {
+                    console.log("找到图容器，创建绘图");
+                    Plotly.newPlot('graph-container', graphJSON.data, graphJSON.layout);
+                    console.log("图可视化已创建");
+                }
+                
+                const sizeJSON = JSON.parse('{{ size_json|safe }}');
+                Plotly.newPlot('size-container', sizeJSON.data, sizeJSON.layout);
+                
+                {% if cuts_json %}
+                const cutsJSON = JSON.parse('{{ cuts_json|safe }}');
+                Plotly.newPlot('cuts-container', cutsJSON.data, cutsJSON.layout);
+                {% else %}
+                document.getElementById('cuts-container').innerHTML = '<div class="alert alert-info">没有属性切割可显示。</div>';
+                {% endif %}
+                
+                {% if history_json %}
+                const historyJSON = JSON.parse('{{ history_json|safe }}');
+                Plotly.newPlot('history-container', historyJSON.data, historyJSON.layout);
+                {% else %}
+                document.getElementById('history-container').innerHTML = '<div class="alert alert-info">新版MPC算法使用不同的优化策略，不再生成历史图表。</div>';
+                {% endif %}
+                
+                // 迭代过程动画
+                {% if iteration_json %}
+                console.log("创建迭代过程动画");
+                try {
+                    const iterationJSON = JSON.parse('{{ iteration_json|safe }}');
+                    console.log("迭代数据解析成功");
+                    Plotly.newPlot('iteration-container', iterationJSON.data, iterationJSON.layout, {
+                        displayModeBar: true,
+                        responsive: true
+                    });
+                    if (iterationJSON.frames) {
+                        Plotly.addFrames('iteration-container', iterationJSON.frames);
+                        
+                        // 窗口大小变化时调整动画大小
+                        window.addEventListener('resize', function() {
+                            Plotly.relayout('iteration-container', {
+                                'autosize': true
+                            });
+                        });
+                    }
+                    console.log("迭代过程动画已创建");
+                } catch (parseError) {
+                    console.error("解析迭代JSON数据时出错:", parseError);
+                    document.getElementById('iteration-container').innerHTML = 
+                        '<div class="alert alert-danger">解析迭代数据时出错: ' + parseError.message + '</div>';
+                }
+                {% else %}
+                document.getElementById('iteration-container').innerHTML = '<div class="alert alert-info">新版MPC算法使用不同的优化策略，不再生成迭代动画。</div>';
+                {% endif %}
+                
+            } catch (error) {
+                console.error("初始化可视化时出错:", error);
+                document.getElementById('graph-container').innerHTML = 
+                    '<div class="alert alert-danger">初始化可视化时出错: ' + error.message + '</div>';
+            }
+        });
+    </script>
+</body>
+</html> 

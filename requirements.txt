@@ -1,0 +1,7 @@
+flask
+networkx
+rdflib
+plotly
+pandas
+numpy
+Werkzeug

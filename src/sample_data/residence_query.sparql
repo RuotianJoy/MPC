@@ -1,0 +1,15 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.org/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX dbo: <http://dbpedia.org/ontology/>
+
+# 查询居住在Maharashtra的人及其ID
+SELECT ?person ?name ?id
+WHERE {
+  ?person a foaf:Person .
+  ?person rdfs:label ?name .
+  ?person ex:id ?id .
+  ?person dbo:residence ex:Maharashtra .
+} 

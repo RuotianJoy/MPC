@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MPC算法结果</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         .jumbotron {
@@ -17,10 +18,68 @@
             height: 500px;
             width: 100%;
         }
-        .animation-container {
-            height: 600px;
-            width: 100%;
-            margin-bottom: 20px;
+        /* 日志样式 */
+        .log-content {
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            background-color: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #333;
+            white-space: pre-wrap;
+        }
+        /* 步骤标题高亮 */
+        .log-content:contains("=========") {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        /* 步骤分隔符 */
+        .step-separator {
+            border-top: 2px solid #0d6efd;
+            margin: 10px 0;
+        }
+        /* 标签高亮颜色 */
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        /* 滚动条样式 */
+        .log-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .log-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .log-content::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        .log-content::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* SPARQL查询样式 */
+        .sparql-query {
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            background-color: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #333;
+            white-space: pre-wrap;
+        }
+        /* 子查询卡片样式 */
+        .subquery-card {
+            margin-bottom: 15px;
+            border: 1px solid rgba(0,123,255,0.2);
+            border-radius: 5px;
+        }
+        .subquery-card .card-header {
+            background-color: rgba(0,123,255,0.1);
+            font-weight: bold;
         }
     </style>
 </head>
@@ -53,150 +112,395 @@
         <div class="jumbotron">
             <h1>MPC算法结果</h1>
             <p class="lead">
-                MPC算法的结果，共 {{ num_partitions }} 个分区{% if alpha %}，α={{ alpha }}{% endif %}。
+                MPC算法的结果，共 {{ num_partitions }} 个分区{% if epsilon %}，ε={{ epsilon }}{% endif %}。
             </p>
         </div>
-
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>分区图可视化</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="graph-container" class="visualization-container"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5>分区指标</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-group">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                总切割属性数
-                                <span class="badge bg-primary rounded-pill">{{ metrics.total_cut_properties }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                唯一切割属性数
-                                <span class="badge bg-primary rounded-pill">{{ metrics.unique_cut_properties }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                平衡比率
-                                <span class="badge bg-primary rounded-pill">{{ "%.2f"|format(metrics.balance_ratio) }}</span>
-                            </li>
-                        </ul>
-
-                        <h6 class="mt-3">分区大小</h6>
-                        <ul class="list-group">
-                            {% for size in metrics.partition_sizes %}
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    分区 {{ loop.index0 }}
-                                    <span class="badge bg-primary rounded-pill">{{ size }}</span>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h5>导出分区</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="/export" method="post">
-                            <div class="mb-3">
-                                <label for="export_dir" class="form-label">导出目录</label>
-                                <input type="text" class="form-control" id="export_dir" name="export_dir" value="exports">
+        
+        <!-- 主内容区域 - 使用选项卡 -->
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="partitioning-tab" data-bs-toggle="tab" data-bs-target="#partitioning" 
+                        type="button" role="tab" aria-controls="partitioning" aria-selected="true">图分区结果</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sparql-tab" data-bs-toggle="tab" data-bs-target="#sparql" 
+                        type="button" role="tab" aria-controls="sparql" aria-selected="false">SPARQL查询处理</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="myTabContent">
+            <!-- 图分区结果选项卡 -->
+            <div class="tab-pane fade show active" id="partitioning" role="tabpanel" aria-labelledby="partitioning-tab">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>分区图可视化</h5>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label for="filename" class="form-label">基本文件名</label>
-                                <input type="text" class="form-control" id="filename" name="filename" value="partition">
+                            <div class="card-body">
+                                <div id="graph-container" class="visualization-container"></div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label for="format" class="form-label">格式</label>
-                                <select class="form-select" id="format" name="format">
-                                    <option value="turtle">Turtle</option>
-                                    <option value="xml">RDF/XML</option>
-                                    <option value="n3">N3</option>
-                                    <option value="nt">N-Triples</option>
-                                    <option value="jsonld">JSON-LD</option>
-                                </select>
+                        </div>
+                        
+                        <!-- 算法日志部分 -->
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h5>算法执行日志</h5>
                             </div>
-                            
-                            <button type="submit" class="btn btn-success w-100">导出分区</button>
-                        </form>
+                            <div class="card-body">
+                                <nav>
+                                    <div class="nav nav-tabs" id="log-tab" role="tablist">
+                                        <button class="nav-link active" id="all-logs-tab" data-bs-toggle="tab" 
+                                                data-bs-target="#all-logs" type="button" role="tab" 
+                                                aria-controls="all-logs" aria-selected="true">完整日志</button>
+                                        
+                                        {% for step in step_logs.keys() %}
+                                        <button class="nav-link" id="{{ step|replace(' ', '-')|replace(':', '')|lower }}-tab" data-bs-toggle="tab" 
+                                                data-bs-target="#{{ step|replace(' ', '-')|replace(':', '')|lower }}" type="button" role="tab" 
+                                                aria-controls="{{ step|replace(' ', '-')|replace(':', '')|lower }}">{{ step.split(':')[0] }}</button>
+                                        {% endfor %}
+                                    </div>
+                                </nav>
+                                <div class="tab-content" id="log-tabContent">
+                                    <div class="tab-pane fade show active p-3" id="all-logs" role="tabpanel" aria-labelledby="all-logs-tab">
+                                        <div class="d-flex justify-content-end mb-2">
+                                            <button class="btn btn-sm btn-outline-primary scroll-top me-2" data-tab="all-logs">
+                                                <i class="bi bi-arrow-up"></i> 顶部
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-primary scroll-bottom" data-tab="all-logs">
+                                                <i class="bi bi-arrow-down"></i> 底部
+                                            </button>
+                                        </div>
+                                        <pre class="log-content" style="max-height: 500px; overflow-y: auto;">{% for log in logs %}{{ log }}
+{% endfor %}</pre>
+                                    </div>
+                                    
+                                    {% for step, step_log in step_logs.items() %}
+                                    <div class="tab-pane fade p-3" id="{{ step|replace(' ', '-')|replace(':', '')|lower }}" role="tabpanel" 
+                                         aria-labelledby="{{ step|replace(' ', '-')|replace(':', '')|lower }}-tab">
+                                        <div class="d-flex justify-content-end mb-2">
+                                            <button class="btn btn-sm btn-outline-primary scroll-top me-2" data-tab="{{ step|replace(' ', '-')|replace(':', '')|lower }}">
+                                                <i class="bi bi-arrow-up"></i> 顶部
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-primary scroll-bottom" data-tab="{{ step|replace(' ', '-')|replace(':', '')|lower }}">
+                                                <i class="bi bi-arrow-down"></i> 底部
+                                            </button>
+                                        </div>
+                                        <pre class="log-content" style="max-height: 500px; overflow-y: auto;">{% for log in step_log %}{{ log }}
+{% endfor %}</pre>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>分区大小</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="size-container" class="visualization-container"></div>
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5>分区指标</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        总切割属性数
+                                        <span class="badge bg-primary rounded-pill">{{ metrics.total_cut_properties }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        唯一切割属性数
+                                        <span class="badge bg-primary rounded-pill">{{ metrics.unique_cut_properties }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        平衡比率
+                                        <span class="badge bg-primary rounded-pill">{{ "%.2f"|format(metrics.balance_ratio) }}</span>
+                                    </li>
+                                </ul>
+
+                                <h6 class="mt-3">分区大小</h6>
+                                <ul class="list-group">
+                                    {% for size in metrics.partition_sizes %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            分区 {{ loop.index0 }}
+                                            <span class="badge bg-primary rounded-pill">{{ size }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>导出分区</h5>
+                            </div>
+                            <div class="card-body">
+                                <form action="/export" method="post">
+                                    <div class="mb-3">
+                                        <label for="export_dir" class="form-label">导出目录</label>
+                                        <input type="text" class="form-control" id="export_dir" name="export_dir" value="exports">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="filename" class="form-label">基本文件名</label>
+                                        <input type="text" class="form-control" id="filename" name="filename" value="partition">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="format" class="form-label">格式</label>
+                                        <select class="form-select" id="format" name="format">
+                                            <option value="turtle">Turtle</option>
+                                            <option value="xml">RDF/XML</option>
+                                            <option value="n3">N3</option>
+                                            <option value="nt">N-Triples</option>
+                                            <option value="jsonld">JSON-LD</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-success w-100">导出分区</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>主要切割属性</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="cuts-container" class="visualization-container"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <!-- SPARQL查询处理选项卡 -->
+            <div class="tab-pane fade" id="sparql" role="tabpanel" aria-labelledby="sparql-tab">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5>SPARQL查询分解</h5>
+                            </div>
+                            <div class="card-body">
+                                <form action="/process_sparql" method="post">
+                                    <div class="mb-3">
+                                        <label for="sparql_query" class="form-label">输入SPARQL查询</label>
+                                        <textarea class="form-control sparql-query" id="sparql_query" name="sparql_query" rows="10" placeholder="输入SPARQL查询，例如:
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ex: <http://example.org/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX dbo: <http://dbpedia.org/ontology/>
 
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>优化历史</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="history-container" class="visualization-container"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>迭代过程动画</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="iteration-container" class="animation-container"></div>
+SELECT ?person ?name
+WHERE {
+  ?person a foaf:Person .
+  ?person rdfs:label ?name .
+  ?person dbo:birthPlace ex:India .
+}">{% if sparql_results %}{{ sparql_results.original_query }}{% endif %}</textarea>
+                                    </div>
+                                    <div class="d-flex mb-3">
+                                        <button type="submit" class="btn btn-primary me-2">处理查询</button>
+                                        
+                                        <div class="dropdown">
+                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="exampleDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                加载示例查询
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="exampleDropdown">
+                                                <li><a class="dropdown-item load-example" href="#" data-file="sample_query.sparql">出生在印度的演员及其电影</a></li>
+                                                <li><a class="dropdown-item load-example" href="#" data-file="complex_query.sparql">演员与其共同演员</a></li>
+                                                <li><a class="dropdown-item load-example" href="#" data-file="residence_query.sparql">居住在马哈拉施特拉邦的人</a></li>
+                                                <li><a class="dropdown-item load-example" href="#" data-file="movie_query.sparql">电影及其制作人</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><h6 class="dropdown-header">高级示例查询</h6></li>
+                                                <li><a class="dropdown-item load-example" href="#" data-file="actor_relation_query.sparql">演员关系网络</a></li>
+                                                <li><a class="dropdown-item load-example" href="#" data-file="location_statistics_query.sparql">地点统计分析</a></li>
+                                                <li><a class="dropdown-item load-example" href="#" data-file="movie_analytics_query.sparql">电影详细分析</a></li>
+                                                <li><a class="dropdown-item load-example" href="#" data-file="complex_path_query.sparql">复杂社交网络</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        {% if sparql_results %}
+                        <!-- 原始SPARQL查询结果 -->
+                        <div class="card mb-4" id="sparql-results-container">
+                            <div class="card-header bg-primary text-white">
+                                <h5>原始查询结果</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6>原始SPARQL查询:</h6>
+                                <pre class="sparql-query mb-4">{{ sparql_results.original_query }}</pre>
+                                
+                                {% if sparql_results.original_results %}
+                                <h6>查询结果:</h6>
+                                <div class="table-responsive mt-2">
+                                    <table class="table table-sm table-striped table-bordered">
+                                        <thead class="table-primary">
+                                            <tr>
+                                                {% for var_name in sparql_results.original_results[0].keys() %}
+                                                <th>{{ var_name }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in sparql_results.original_results %}
+                                            <tr>
+                                                {% for value in row.values() %}
+                                                <td>{{ value }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-info mt-2">
+                                    找到 {{ sparql_results.original_results|length }} 条结果
+                                </div>
+                                {% else %}
+                                <div class="alert alert-warning mt-2">
+                                    原始查询未返回结果或执行失败
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- SPARQL查询分解结果 -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5>查询分解结果</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6>共分解为 {{ sparql_results.subqueries|length }} 个子查询</h6>
+                                
+                                <div class="my-3">
+                                    <div class="accordion" id="subqueriesAccordion">
+                                        {% for subquery in sparql_results.subqueries %}
+                                        <div class="accordion-item subquery-card">
+                                            <h2 class="accordion-header" id="heading{{ subquery.id }}">
+                                                <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" 
+                                                        data-bs-toggle="collapse" data-bs-target="#collapse{{ subquery.id }}" 
+                                                        aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="collapse{{ subquery.id }}">
+                                                    <span class="fw-bold">子查询 {{ subquery.id }}</span>
+                                                    (顶点数: {{ subquery.get_vertex_count() }}, 
+                                                    执行分区: {{ sparql_results.execution_plan.execution_plan.get(subquery.id, '未分配') }})
+                                                    {% if sparql_results.subquery_results and sparql_results.subquery_results[subquery.id] %}
+                                                    <span class="badge bg-info ms-2">{{ sparql_results.subquery_results[subquery.id]|length }} 条结果</span>
+                                                    {% endif %}
+                                                </button>
+                                            </h2>
+                                            <div id="collapse{{ subquery.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" 
+                                                 aria-labelledby="heading{{ subquery.id }}" data-bs-parent="#subqueriesAccordion">
+                                                <div class="accordion-body">
+                                                    <h6>变量: 
+                                                        <span class="badge bg-primary">{{ subquery.variables|join(', ') }}</span>
+                                                    </h6>
+                                                    <h6>常量: 
+                                                        <span class="badge bg-secondary">{{ subquery.constants|join(', ') }}</span>
+                                                    </h6>
+                                                    <h6>边:</h6>
+                                                    <ul class="list-group list-group-flush mb-3">
+                                                        {% for edge in subquery.edges %}
+                                                        <li class="list-group-item">{{ edge }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                    
+                                                    <h6>生成的SPARQL查询:</h6>
+                                                    <pre class="sparql-query mb-3">{{ sparql_results.subqueries_sparql[subquery.id] }}</pre>
+                                                    
+                                                    {% if sparql_results.subquery_results and sparql_results.subquery_results[subquery.id] %}
+                                                    <h6>查询结果:</h6>
+                                                    <div class="table-responsive mt-2">
+                                                        <table class="table table-sm table-striped table-bordered">
+                                                            <thead class="table-success">
+                                                                <tr>
+                                                                    {% for var_name in sparql_results.subquery_results[subquery.id][0].keys() %}
+                                                                    <th>{{ var_name }}</th>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for row in sparql_results.subquery_results[subquery.id] %}
+                                                                <tr>
+                                                                    {% for value in row.values() %}
+                                                                    <td>{{ value }}</td>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <div class="alert alert-info mt-2">
+                                                        找到 {{ sparql_results.subquery_results[subquery.id]|length }} 条结果
+                                                    </div>
+                                                    {% else %}
+                                                    <div class="alert alert-warning mt-2">
+                                                        此子查询未返回结果或未执行
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- SPARQL查询处理日志 -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5>查询处理日志</h5>
+                            </div>
+                            <div class="card-body">
+                                <nav>
+                                    <div class="nav nav-tabs" id="sparql-log-tab" role="tablist">
+                                        <button class="nav-link active" id="sparql-all-logs-tab" data-bs-toggle="tab" 
+                                                data-bs-target="#sparql-all-logs" type="button" role="tab" 
+                                                aria-controls="sparql-all-logs" aria-selected="true">完整日志</button>
+                                        
+                                        {% for step in sparql_results.step_logs.keys() %}
+                                        <button class="nav-link" id="sparql-{{ step|replace(' ', '-')|replace(':', '')|lower }}-tab" data-bs-toggle="tab" 
+                                                data-bs-target="#sparql-{{ step|replace(' ', '-')|replace(':', '')|lower }}" type="button" role="tab" 
+                                                aria-controls="sparql-{{ step|replace(' ', '-')|replace(':', '')|lower }}">{{ step.split(':')[0] }}</button>
+                                        {% endfor %}
+                                    </div>
+                                </nav>
+                                <div class="tab-content" id="sparql-log-tabContent">
+                                    <div class="tab-pane fade show active p-3" id="sparql-all-logs" role="tabpanel" aria-labelledby="sparql-all-logs-tab">
+                                        <div class="d-flex justify-content-end mb-2">
+                                            <button class="btn btn-sm btn-outline-info scroll-top me-2" data-tab="sparql-all-logs">
+                                                <i class="bi bi-arrow-up"></i> 顶部
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-info scroll-bottom" data-tab="sparql-all-logs">
+                                                <i class="bi bi-arrow-down"></i> 底部
+                                            </button>
+                                        </div>
+                                        <pre class="log-content border rounded p-3" style="max-height: 500px; overflow-y: auto; background-color: #f8f9fa;">{% for log in sparql_results.logs %}{{ log }}
+{% endfor %}</pre>
+                                    </div>
+                                    
+                                    {% for step, step_log in sparql_results.step_logs.items() %}
+                                    <div class="tab-pane fade p-3" id="sparql-{{ step|replace(' ', '-')|replace(':', '')|lower }}" role="tabpanel" 
+                                         aria-labelledby="sparql-{{ step|replace(' ', '-')|replace(':', '')|lower }}-tab">
+                                        <div class="d-flex justify-content-end mb-2">
+                                            <button class="btn btn-sm btn-outline-info scroll-top me-2" data-tab="sparql-{{ step|replace(' ', '-')|replace(':', '')|lower }}">
+                                                <i class="bi bi-arrow-up"></i> 顶部
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-info scroll-bottom" data-tab="sparql-{{ step|replace(' ', '-')|replace(':', '')|lower }}">
+                                                <i class="bi bi-arrow-down"></i> 底部
+                                            </button>
+                                        </div>
+                                        <pre class="log-content border rounded p-3" style="max-height: 500px; overflow-y: auto; background-color: #f8f9fa;">{% for log in step_log %}{{ log }}
+{% endfor %}</pre>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <footer class="bg-light py-3 mt-5">
-        <div class="container text-center">
-            <p>MPC算法实现 &copy; 2023</p>
-        </div>
-    </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化可视化
+            /* 初始化可视化 */
             try {
                 console.log("初始化图可视化");
                 const graphJSON = JSON.parse('{{ graph_json|safe }}');
@@ -209,59 +513,96 @@
                     Plotly.newPlot('graph-container', graphJSON.data, graphJSON.layout);
                     console.log("图可视化已创建");
                 }
-                
-                const sizeJSON = JSON.parse('{{ size_json|safe }}');
-                Plotly.newPlot('size-container', sizeJSON.data, sizeJSON.layout);
-                
-                {% if cuts_json %}
-                const cutsJSON = JSON.parse('{{ cuts_json|safe }}');
-                Plotly.newPlot('cuts-container', cutsJSON.data, cutsJSON.layout);
-                {% else %}
-                document.getElementById('cuts-container').innerHTML = '<div class="alert alert-info">没有属性切割可显示。</div>';
-                {% endif %}
-                
-                {% if history_json %}
-                const historyJSON = JSON.parse('{{ history_json|safe }}');
-                Plotly.newPlot('history-container', historyJSON.data, historyJSON.layout);
-                {% else %}
-                document.getElementById('history-container').innerHTML = '<div class="alert alert-info">新版MPC算法使用不同的优化策略，不再生成历史图表。</div>';
-                {% endif %}
-                
-                // 迭代过程动画
-                {% if iteration_json %}
-                console.log("创建迭代过程动画");
-                try {
-                    const iterationJSON = JSON.parse('{{ iteration_json|safe }}');
-                    console.log("迭代数据解析成功");
-                    Plotly.newPlot('iteration-container', iterationJSON.data, iterationJSON.layout, {
-                        displayModeBar: true,
-                        responsive: true
-                    });
-                    if (iterationJSON.frames) {
-                        Plotly.addFrames('iteration-container', iterationJSON.frames);
-                        
-                        // 窗口大小变化时调整动画大小
-                        window.addEventListener('resize', function() {
-                            Plotly.relayout('iteration-container', {
-                                'autosize': true
-                            });
-                        });
-                    }
-                    console.log("迭代过程动画已创建");
-                } catch (parseError) {
-                    console.error("解析迭代JSON数据时出错:", parseError);
-                    document.getElementById('iteration-container').innerHTML = 
-                        '<div class="alert alert-danger">解析迭代数据时出错: ' + parseError.message + '</div>';
-                }
-                {% else %}
-                document.getElementById('iteration-container').innerHTML = '<div class="alert alert-info">新版MPC算法使用不同的优化策略，不再生成迭代动画。</div>';
-                {% endif %}
-                
             } catch (error) {
                 console.error("初始化可视化时出错:", error);
-                document.getElementById('graph-container').innerHTML = 
-                    '<div class="alert alert-danger">初始化可视化时出错: ' + error.message + '</div>';
+                document.getElementById('graph-container').innerHTML = '<div class="alert alert-danger">无法加载可视化: ' + error.message + '</div>';
             }
+            
+            /* 格式化日志内容 */
+            const formatLogs = () => {
+                const logElements = document.querySelectorAll('.log-content');
+                logElements.forEach(logElement => {
+                    let content = logElement.innerHTML;
+                    
+                    /* 高亮步骤标题 */
+                    content = content.replace(/==+/g, (match) => {
+                        return `<span class="text-primary fw-bold">${match}</span>`;
+                    });
+                    
+                    /* 高亮步骤名称 */
+                    content = content.replace(/(步骤\d+:[^<\n]+)/g, (match) => {
+                        return `<span class="text-primary fw-bold">${match}</span>`;
+                    });
+                    
+                    /* 高亮重要信息（如分区结果） */
+                    content = content.replace(/(总切割属性数|唯一切割属性数|分区平衡度|分区大小):[^<\n]+/g, (match) => {
+                        return `<span class="text-success fw-bold">${match}</span>`;
+                    });
+                    
+                    /* 高亮警告 */
+                    content = content.replace(/(警告|超出大小限制|超出限制)[^<\n]*?/g, (match) => {
+                        return `<span class="text-danger">${match}</span>`;
+                    });
+                    
+                    logElement.innerHTML = content;
+                    
+                    /* 滚动到底部 */
+                    logElement.scrollTop = logElement.scrollHeight;
+                });
+            };
+            
+            /* 调用日志格式化 */
+            formatLogs();
+            
+            /* SPARQL选项卡自动激活 */
+            var hasSparqlResults = document.getElementById('sparql-results-container') !== null;
+            if (hasSparqlResults) {
+                setTimeout(() => {
+                    const sparqlTab = document.getElementById('sparql-tab');
+                    if (sparqlTab) sparqlTab.click();
+                }, 100);
+            }
+            
+            /* 添加"滚动到顶部"和"滚动到底部"按钮功能 */
+            document.querySelectorAll('.scroll-top').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const tabId = this.getAttribute('data-tab');
+                    document.querySelector(`#${tabId} .log-content`).scrollTop = 0;
+                });
+            });
+            
+            document.querySelectorAll('.scroll-bottom').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const tabId = this.getAttribute('data-tab');
+                    const logContent = document.querySelector(`#${tabId} .log-content`);
+                    logContent.scrollTop = logContent.scrollHeight;
+                });
+            });
+            
+            /* 示例查询加载功能 */
+            document.querySelectorAll('.load-example').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const filename = this.getAttribute('data-file');
+                    
+                    // 使用fetch API加载示例查询文件
+                    fetch('/static/sample_data/' + filename)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('无法加载示例查询文件');
+                            }
+                            return response.text();
+                        })
+                        .then(data => {
+                            // 将查询填入文本区域
+                            document.getElementById('sparql_query').value = data;
+                        })
+                        .catch(error => {
+                            console.error('加载示例查询时出错:', error);
+                            alert('加载示例查询时出错: ' + error.message);
+                        });
+                });
+            });
         });
     </script>
 </body>

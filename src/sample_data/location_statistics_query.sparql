@@ -1,0 +1,36 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.org/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX dbo: <http://dbpedia.org/ontology/>
+
+# 统计各地区的人员数量及相关信息
+SELECT ?location ?locationName (COUNT(DISTINCT ?person) AS ?personCount)
+       (GROUP_CONCAT(DISTINCT ?name; separator=", ") AS ?personNames)
+WHERE {
+  # 获取所有地点
+  ?location a ?locationType .
+  ?location rdfs:label ?locationName .
+  
+  # 查找与该地点相关的人
+  {
+    # 出生地
+    ?person dbo:birthPlace ?location .
+    ?person rdfs:label ?name .
+  }
+  UNION
+  {
+    # 居住地
+    ?person dbo:residence ?location .
+    ?person rdfs:label ?name .
+  }
+  
+  # 确保是人物
+  ?person a foaf:Person .
+  
+  # 可选过滤地点类型
+  FILTER(?locationType IN (dbo:Place, dbo:Country))
+}
+GROUP BY ?location ?locationName
+ORDER BY DESC(?personCount) ?locationName 

@@ -1,0 +1,53 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.org/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX dbo: <http://dbpedia.org/ontology/>
+
+# 查找相同地区出生的演员和他们的社交关系网络
+SELECT ?person1 ?name1 ?person2 ?name2 ?birthPlace ?birthPlaceName ?relationshipType
+WHERE {
+  # 第一个人
+  ?person1 a foaf:Person .
+  ?person1 rdfs:label ?name1 .
+  
+  # 第二个人
+  ?person2 a foaf:Person .
+  ?person2 rdfs:label ?name2 .
+  
+  # 两个不同的人
+  FILTER(?person1 != ?person2)
+  
+  # 共同的出生地
+  ?person1 dbo:birthPlace ?birthPlace .
+  ?person2 dbo:birthPlace ?birthPlace .
+  ?birthPlace rdfs:label ?birthPlaceName .
+  
+  # 查找两人之间的关系
+  {
+    # 配偶关系
+    ?person1 dbo:spouse ?person2 .
+    BIND("spouse" AS ?relationshipType)
+  }
+  UNION
+  {
+    # 共同出演的电影
+    ?movie dbo:starring ?person1 .
+    ?movie dbo:starring ?person2 .
+    ?movie rdfs:label ?movieName .
+    BIND(CONCAT("co-star in ", ?movieName) AS ?relationshipType)
+  }
+  UNION
+  {
+    # 共同居住地
+    ?person1 dbo:residence ?residence .
+    ?person2 dbo:residence ?residence .
+    ?residence rdfs:label ?residenceName .
+    BIND(CONCAT("lives in same place: ", ?residenceName) AS ?relationshipType)
+  }
+  
+  # 额外过滤，只选择出生在印度的人
+  ?birthPlace rdfs:label "India" .
+}
+ORDER BY ?name1 ?name2 

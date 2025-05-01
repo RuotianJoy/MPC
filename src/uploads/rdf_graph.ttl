@@ -1,0 +1,37 @@
+
+@prefix ex: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Desi_Magic a ex:Movie ;
+    ex:starring ex:Ameesha_Patel, ex:Zayed_Khan ;
+    ex:producer ex:Kuunal_Goomer .
+
+ex:Ameesha_Patel a ex:Person ;
+    ex:birthPlace ex:India .
+
+ex:Zayed_Khan a ex:Person ;
+    ex:birthPlace ex:India .
+
+ex:Kuunal_Goomer a ex:Person ;
+    ex:residence ex:India .
+
+ex:India a ex:Country ;
+    ex:foundingDate "1947-08-15"^^xsd:date .
+
+ex:Maharashtra a ex:State ;
+    ex:foundingDate "1960-05-01"^^xsd:date ;
+    ex:residence ex:Saif_Ali_Khan .
+
+ex:Mishti a ex:Person ;
+    ex:residence ex:Maharashtra .
+
+ex:Saif_Ali_Khan a ex:Person ;
+    ex:birthPlace ex:India ;
+    ex:residence ex:Maharashtra ;
+    ex:spouse ex:Kareena_Kapoor .
+
+ex:Kareena_Kapoor a ex:Person ;
+    ex:birthPlace ex:India ;
+    ex:starring ex:Kurbaan .
+
+ex:Kurbaan a ex:Movie .

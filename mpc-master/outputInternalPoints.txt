@@ -1,0 +1,17 @@
+<http://example.org/India>	1
+<http://dbpedia.org/ontology/Country>	1
+<http://example.org/Maharashtra>	0
+<http://example.org/Date_1947_08_15>	1
+<http://www.w3.org/2001/XMLSchema#date>	0
+<http://example.org/Saif_Ali_Khan>	0
+<http://example.org/Zayed_Khan>	0
+<http://xmlns.com/foaf/0.1/Person>	1
+<http://example.org/Kurbaan>	0
+<http://example.org/Kareena_Kapoor>	0
+<http://example.org/Desi_Magic>	1
+<http://example.org/Mishti>	0
+<http://example.org/Ameesha_Patel>	1
+<http://example.org/Date_1960_05_01>	1
+<http://dbpedia.org/ontology/Film>	0
+<http://example.org/Kuunal_Goomer>	1
+<http://dbpedia.org/ontology/Place>	0

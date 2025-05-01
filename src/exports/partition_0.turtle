@@ -1,0 +1,44 @@
+@prefix dbo: <http://dbpedia.org/ontology/> .
+@prefix ex: <http://example.org/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Desi_Magic a dbo:Film ;
+    rdfs:label "Desi Magic" ;
+    dbo:producer ex:Kuunal_Goomer ;
+    dbo:starring ex:Ameesha_Patel,
+        ex:Zayed_Khan ;
+    ex:id "001" .
+
+ex:Kareena_Kapoor dbo:birthPlace ex:India .
+
+ex:Saif_Ali_Khan dbo:birthPlace ex:India .
+
+ex:Ameesha_Patel a foaf:Person ;
+    rdfs:label "Ameesha Patel" ;
+    dbo:birthPlace ex:Maharashtra ;
+    ex:id "002" .
+
+ex:Date_1947_08_15 a xsd:date ;
+    rdfs:label "1947-08-15" ;
+    ex:id "011" ;
+    rdf:value "1947-08-15"^^xsd:date .
+
+ex:Kuunal_Goomer a foaf:Person ;
+    rdfs:label "Kuunal Goomer" ;
+    dbo:residence ex:India ;
+    ex:id "012" .
+
+ex:Zayed_Khan a foaf:Person ;
+    rdfs:label "Zayed Khan" ;
+    dbo:birthPlace ex:India,
+        ex:Maharashtra ;
+    ex:id "003" .
+
+ex:India a dbo:Country ;
+    rdfs:label "India" ;
+    dbo:foundingDate ex:Date_1947_08_15 ;
+    ex:id "010" .
+

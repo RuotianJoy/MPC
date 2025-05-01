@@ -56,13 +56,80 @@ class MPCVisualizer:
         else:
             self.layout = nx.spring_layout(self.graph, seed=42)
     
-    def plot_graph(self, partition_map: Dict = None, title: str = "RDF图可视化") -> go.Figure:
+    def get_node_label(self, node):
+        """获取节点的标签或名称"""
+        # 先检查常见的标签属性
+        for attr in ["label", "name", "rdfs:label", "foaf:name"]:
+            if attr in self.graph.nodes[node]:
+                return self.graph.nodes[node][attr]
+        
+        # 如果没有常见标签，返回节点本身的简短表示
+        if isinstance(node, str) and "/" in node:
+            return node.split("/")[-1]
+        return str(node)
+    
+    def is_meaningful_node(self, node):
+        """
+        判断节点是否有意义（有有效标签或属性，且类型已知）
+        
+        Args:
+            node: 要检查的节点
+            
+        Returns:
+            布尔值，表示节点是否有意义
+        """
+        # 检查节点是否有类型
+        node_type = self.get_node_type(node)
+        if node_type == "未知":
+            return False
+        
+        # 如果节点有任何标签属性，认为是有意义的
+        for attr in ["label", "name", "rdfs:label", "foaf:name"]:
+            if attr in self.graph.nodes[node]:
+                return True
+        
+        # 如果节点有任何属性，也认为是有意义的
+        if len(self.graph.nodes[node]) > 0:
+            return True
+            
+        # 如果节点有多个连接，也认为是有意义的
+        if self.graph.degree(node) > 1:
+            return True
+            
+        # 没有标签、属性且连接少，认为无意义
+        return False
+        
+    def filter_meaningless_nodes(self):
+        """
+        从图中移除无意义的节点
+        
+        Returns:
+            经过过滤的新图
+        """
+        filtered_graph = self.graph.copy()
+        nodes_to_remove = []
+        
+        for node in filtered_graph.nodes():
+            if not self.is_meaningful_node(node):
+                nodes_to_remove.append(node)
+                
+        filtered_graph.remove_nodes_from(nodes_to_remove)
+        
+        print(f"过滤前节点数: {len(self.graph.nodes())}")
+        print(f"过滤后节点数: {len(filtered_graph.nodes())}")
+        print(f"移除了 {len(nodes_to_remove)} 个无意义节点")
+        
+        return filtered_graph
+    
+    def plot_graph(self, partition_map: Dict = None, title: str = "RDF图可视化", filter_nodes: bool = False, show_edge_labels: bool = True) -> go.Figure:
         """
         Create a Plotly figure of the graph
         
         Args:
             partition_map: Dictionary mapping vertex to partition ID
             title: Title for the plot
+            filter_nodes: 是否过滤无意义的节点
+            show_edge_labels: 是否显示边的标签
             
         Returns:
             Plotly figure object
@@ -70,48 +137,165 @@ class MPCVisualizer:
         if self.layout is None:
             self.compute_layout()
         
+        # 如果需要，过滤无意义节点
+        display_graph = self.filter_meaningless_nodes() if filter_nodes else self.graph
+        
+        # 重新计算布局（如果过滤了节点）
+        if filter_nodes:
+            temp_vis = MPCVisualizer(display_graph)
+            temp_vis.compute_layout()
+            temp_layout = temp_vis.layout
+        else:
+            temp_layout = self.layout
+        
         # 调试信息
         if partition_map:
             print(f"传入的partition_map长度: {len(partition_map)}")
             print(f"partition_map前5个元素: {list(partition_map.items())[:5]}")
-            print(f"self.graph.nodes前5个元素: {list(self.graph.nodes())[:5]}")
+            print(f"display_graph.nodes前5个元素: {list(display_graph.nodes())[:5]}")
             
             # 检查节点与分区映射的匹配情况
             match_count = 0
-            for node in self.graph.nodes():
+            for node in display_graph.nodes():
                 if node in partition_map:
                     match_count += 1
-            print(f"节点在partition_map中的匹配率: {match_count}/{len(self.graph.nodes())}")
+            print(f"节点在partition_map中的匹配率: {match_count}/{len(display_graph.nodes())}")
         
-        # Create edge traces
-        edge_x = []
-        edge_y = []
-        edge_properties = []
-        edge_text = []
+        # 为边分类，按谓词分组
+        edge_by_predicate = {}
+        for u, v, data in display_graph.edges(data=True):
+            pred = data.get("property", "unknown")
+            if pred not in edge_by_predicate:
+                edge_by_predicate[pred] = []
+            edge_by_predicate[pred].append((u, v, data))
+            
+        # 为每种谓词创建不同颜色的边
+        edge_traces = []
         
-        for u, v, data in self.graph.edges(data=True):
-            x0, y0 = self.layout[u]
-            x1, y1 = self.layout[v]
+        # 预定义一些颜色供边使用
+        edge_colors = [
+            "#636EFA", "#EF553B", "#00CC96", "#AB63FA", "#FFA15A", 
+            "#19D3F3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"
+        ]
+        
+        # 创建一个图例以显示边的类型
+        edge_legend_traces = []
+        
+        for i, (pred, edges) in enumerate(edge_by_predicate.items()):
+            # 使用颜色循环
+            color = edge_colors[i % len(edge_colors)]
             
-            edge_x.extend([x0, x1, None])
-            edge_y.extend([y0, y1, None])
-            prop = data.get("property", "unknown")
-            edge_properties.append(prop)
+            # 创建这种类型边的数据点
+            edge_x = []
+            edge_y = []
+            edge_text = []
             
-            # 准备边的悬停文本
-            source_label = self.get_node_label(u)
-            target_label = self.get_node_label(v)
-            edge_text.append(f"关系: {prop}<br>从: {source_label}<br>到: {target_label}")
-            edge_text.append(f"关系: {prop}<br>从: {source_label}<br>到: {target_label}")
-            edge_text.append(None)  # 为None点添加空文本
+            # 为每条边创建文本和坐标
+            for u, v, data in edges:
+                x0, y0 = temp_layout[u]
+                x1, y1 = temp_layout[v]
+                
+                edge_x.extend([x0, x1, None])
+                edge_y.extend([y0, y1, None])
+                
+                # 准备边的悬停文本
+                source_label = self.get_node_label(u)
+                target_label = self.get_node_label(v)
+                edge_text.append(f"关系: {pred}<br>从: {source_label}<br>到: {target_label}")
+                edge_text.append(f"关系: {pred}<br>从: {source_label}<br>到: {target_label}")
+                edge_text.append(None)  # 为None点添加空文本
             
-        edge_trace = go.Scatter(
-            x=edge_x, y=edge_y,
-            line=dict(width=1.0, color="#888"),
-            hoverinfo="text",
-            text=edge_text,
-            mode="lines")
+            # 创建这种类型的边的轨迹
+            edge_trace = go.Scatter(
+                x=edge_x, y=edge_y,
+                line=dict(width=1.5, color=color),
+                hoverinfo="text",
+                text=edge_text,
+                mode="lines",
+                name=self.get_short_predicate_name(pred)
+            )
             
+            edge_traces.append(edge_trace)
+            
+            # 添加箭头来表示边的方向
+            for u, v, data in edges:
+                x0, y0 = temp_layout[u]
+                x1, y1 = temp_layout[v]
+                
+                # 计算边的方向向量
+                dx = x1 - x0
+                dy = y1 - y0
+                
+                # 边的长度
+                length = (dx**2 + dy**2)**0.5
+                
+                if length == 0:  # 避免除以零
+                    continue
+                
+                # 单位向量
+                udx = dx / length
+                udy = dy / length
+                
+                # 将箭头放在边的80%处，避免与节点重合
+                arrow_pos = 0.8
+                arrow_x = x0 + arrow_pos * dx
+                arrow_y = y0 + arrow_pos * dy
+                
+                # 箭头大小基于边长度
+                arrow_size = min(0.02 * length, 0.3)
+                
+                # 创建箭头
+                arrow_trace = go.Scatter(
+                    x=[arrow_x, arrow_x - arrow_size * (udx * 0.7 + udy * 0.7), arrow_x - arrow_size * (udx * 0.7 - udy * 0.7), arrow_x],
+                    y=[arrow_y, arrow_y - arrow_size * (udy * 0.7 - udx * 0.7), arrow_y - arrow_size * (udy * 0.7 + udx * 0.7), arrow_y],
+                    mode='lines',
+                    line=dict(color=color, width=1.5),
+                    fill='toself',
+                    fillcolor=color,
+                    hoverinfo='none',
+                    showlegend=False
+                )
+                
+                edge_traces.append(arrow_trace)
+            
+            # 添加一个隐藏的轨迹用于图例
+            legend_trace = go.Scatter(
+                x=[None], y=[None],
+                mode="lines",
+                line=dict(width=2, color=color),
+                name=self.get_short_predicate_name(pred)
+            )
+            edge_legend_traces.append(legend_trace)
+        
+        # 创建边标签，如果需要
+        edge_label_traces = []
+        if show_edge_labels:
+            # 为每种谓词类型创建标签
+            for pred, edges in edge_by_predicate.items():
+                # 为避免标签过多，只为每种类型选择部分边
+                sample_edges = edges[:min(len(edges), 5)]  # 每种类型最多5个标签
+                
+                for u, v, data in sample_edges:
+                    x0, y0 = temp_layout[u]
+                    x1, y1 = temp_layout[v]
+                    
+                    # 计算边的中点位置
+                    mid_x = (x0 + x1) / 2
+                    mid_y = (y0 + y1) / 2
+                    
+                    # 创建标签轨迹
+                    label_trace = go.Scatter(
+                        x=[mid_x],
+                        y=[mid_y],
+                        mode="text",
+                        text=[self.get_short_predicate_name(pred)],
+                        textposition="middle center",
+                        textfont=dict(size=9, color="#555"),
+                        hoverinfo="none",
+                        showlegend=False
+                    )
+                    edge_label_traces.append(label_trace)
+        
         # Create node traces
         node_x = []
         node_y = []
@@ -119,15 +303,25 @@ class MPCVisualizer:
         node_sizes = []
         node_text = []
         
-        for node in self.graph.nodes():
-            x, y = self.layout[node]
+        for node in display_graph.nodes():
+            x, y = temp_layout[node]
             node_x.append(x)
             node_y.append(y)
             
             # Assign color based on partition
             if partition_map and node in partition_map:
                 partition = partition_map[node]
-                color = self.partition_colors.get(partition, "#000000")
+                if partition >= 0:
+                    # 正常分区ID
+                    color = self.partition_colors.get(partition, "#000000")
+                else:
+                    # 负数ID (临时连通分量或未分配)
+                    if partition == -1:
+                        color = "#CCCCCC"  # 未分配
+                    else:
+                        # 使用临时ID的颜色
+                        color_idx = abs(partition) % len(self.temp_colors)
+                        color = self.temp_colors[color_idx]
             else:
                 color = "#1f77b4"  # default blue
                 
@@ -144,7 +338,13 @@ class MPCVisualizer:
             # Node text for hover
             text = f"节点: {node_label}<br>类型: {node_type}<br>连接数: {self.graph.degree(node)}"
             if partition_map and node in partition_map:
-                text += f"<br>分区: {partition_map[node]}"
+                if partition_map[node] >= 0:
+                    text += f"<br>分区: {partition_map[node]}"
+                else:
+                    if partition_map[node] == -1:
+                        text += "<br>分区: 未分配"
+                    else:
+                        text += f"<br>临时连通分量: {partition_map[node]}"
                 
             # 添加节点的属性信息
             node_props = self.get_node_properties(node)
@@ -164,35 +364,45 @@ class MPCVisualizer:
                 color=node_colors,
                 size=node_sizes,
                 line=dict(width=1, color="#000000")
-            )
+            ),
+            name="节点"
         )
+        
+        # 创建节点标签轨迹
+        node_label_trace = go.Scatter(
+            x=node_x, y=node_y,
+            mode="text",
+            text=[self.get_node_label(node) for node in display_graph.nodes()],
+            textposition="top center",
+            textfont=dict(size=10),
+            hoverinfo="none",
+            showlegend=False
+        )
+        
+        # 所有轨迹的组合，先画边，再画节点和标签
+        all_traces = edge_traces + edge_label_traces + [node_trace, node_label_trace]
         
         # Create figure
         fig = go.Figure(
-            data=[edge_trace, node_trace],
+            data=all_traces,
             layout=go.Layout(
                 title=title,
-                showlegend=False,
+                showlegend=True,
                 hovermode="closest",
                 margin=dict(b=20, l=5, r=5, t=40),
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
             )
         )
         
         return fig
-    
-    def get_node_label(self, node):
-        """获取节点的标签或名称"""
-        # 先检查常见的标签属性
-        for attr in ["label", "name", "rdfs:label", "foaf:name"]:
-            if attr in self.graph.nodes[node]:
-                return self.graph.nodes[node][attr]
-        
-        # 如果没有常见标签，返回节点本身的简短表示
-        if isinstance(node, str) and "/" in node:
-            return node.split("/")[-1]
-        return str(node)
     
     def get_node_type(self, node):
         """获取节点的类型"""
@@ -373,355 +583,20 @@ class MPCVisualizer:
     
     def create_iteration_animation(self, history_mappings):
         """
-        创建分区迭代过程的动画
+        注意：此方法已被禁用
         
-        Args:
-            history_mappings: 迭代历史中的顶点映射列表，每个元素是一次迭代的分区映射
-            
-        Returns:
-            Plotly动画图表
+        动画功能已被删除，请使用控制台输出查看迭代详情
         """
-        if not history_mappings or self.layout is None:
-            return None
-            
-        frames = []
-        num_iterations = len(history_mappings)
-        
-        # 为每一帧创建更详细的解释文本
-        explanations = []
-        explanations.append("初始状态：算法开始前的图，节点还未被分配到任何分区")
-        
-        # 分析每一步的变化情况
-        for i in range(1, num_iterations):
-            prev_mapping = history_mappings[i-1]
-            curr_mapping = history_mappings[i]
-            
-            # 找出哪些节点改变了分区
-            changed_nodes = {}
-            for node in curr_mapping:
-                if node in prev_mapping:
-                    if curr_mapping[node] != prev_mapping[node]:
-                        changed_nodes[node] = (prev_mapping[node], curr_mapping[node])
-            
-            # 统计分区变化
-            partition_counts = {}
-            for node, (old_part, new_part) in changed_nodes.items():
-                if new_part not in partition_counts:
-                    partition_counts[new_part] = 0
-                partition_counts[new_part] += 1
-            
-            # 获取主要变化节点（前3个）
-            example_nodes = list(changed_nodes.keys())[:3]
-            node_labels = [self.get_node_label(node) for node in example_nodes]
-            
-            # 根据迭代序号生成不同的解释文本
-            if i == 1:
-                if len(changed_nodes) > 0:
-                    explanation = f"第{i}次迭代：算法开始构建初始分区。"
-                    if example_nodes:
-                        explanation += f" 例如，节点 {', '.join(node_labels)} 被分配到分区。"
-                else:
-                    explanation = f"第{i}次迭代：算法开始分析谓词的弱连通分量(WCC)。"
-            elif i == num_iterations - 1:
-                explanation = f"第{i}次迭代：算法完成最终分区分配，共移动 {len(changed_nodes)} 个节点。"
-                if example_nodes:
-                    explanation += f" 最后的节点分配包括 {', '.join(node_labels)}。"
-            else:
-                # 根据迭代序号和变化生成更详细的解释
-                if len(changed_nodes) > 0:
-                    if i <= 3:
-                        explanation = f"第{i}次迭代：处理小规模谓词，移动 {len(changed_nodes)} 个节点到相应分区。"
-                        if example_nodes:
-                            explanation += f" 例如，节点 {', '.join(node_labels)} 被重新分配。"
-                    elif i <= 6:
-                        explanation = f"第{i}次迭代：处理中等规模谓词，移动 {len(changed_nodes)} 个节点以形成更大的连通分量。"
-                        if example_nodes:
-                            explanation += f" 节点 {', '.join(node_labels)} 等被合并到同一分区。"
-                    else:
-                        explanation = f"第{i}次迭代：处理大规模谓词 #{i-6}，移动 {len(changed_nodes)} 个节点。"
-                        for part_id, count in partition_counts.items():
-                            if part_id >= 0:  # 只显示有效分区ID
-                                explanation += f" 分区{part_id}增加{count}个节点。"
-                else:
-                    explanation = f"第{i}次迭代：分析谓词#{i}的连通性，准备下一步分区。"
-            
-            explanations.append(explanation)
-        
-        # 创建第一帧的图
-        first_frame = self.plot_graph(
-            partition_map=history_mappings[0],
-            title="分区迭代过程"
-        )
-        
-        # 创建基础图形
-        # 使用与第一帧相同的数据格式创建基础图形
-        edge_x = []
-        edge_y = []
-        
-        for u, v in self.graph.edges():
-            x0, y0 = self.layout[u]
-            x1, y1 = self.layout[v]
-            edge_x.extend([x0, x1, None])
-            edge_y.extend([y0, y1, None])
-        
-        edge_trace = go.Scatter(
-            x=edge_x, y=edge_y,
-            line=dict(width=1.0, color="#888"),
-            hoverinfo="none",
-            mode="lines"
-        )
-        
-        # 创建初始节点
-        node_x = []
-        node_y = []
-        node_colors = []
-        node_sizes = []
-        node_text = []
-        
-        # 创建一个临时ID到颜色的映射
-        temp_id_to_color = {}
-        
-        for node in self.graph.nodes():
-            x, y = self.layout[node]
-            node_x.append(x)
-            node_y.append(y)
-            
-            # 第一帧的分区
-            partition_map = history_mappings[0]
-            if node in partition_map:
-                partition = partition_map[node]
-                if partition >= 0:
-                    # 正常分区ID
-                    color = self.partition_colors.get(partition, "#000000")
-                else:
-                    # 负数ID (临时连通分量或未分配)
-                    if partition == -1:
-                        color = "#CCCCCC"  # 未分配
-                    else:
-                        # 为临时ID分配一致的颜色
-                        if partition not in temp_id_to_color:
-                            color_idx = len(temp_id_to_color) % len(self.temp_colors)
-                            temp_id_to_color[partition] = self.temp_colors[color_idx]
-                        color = temp_id_to_color[partition]
-            else:
-                color = "#1f77b4"  # default blue
-                
-            node_colors.append(color)
-            
-            # Node size based on degree
-            size = 10 + self.graph.degree(node)
-            node_sizes.append(size)
-            
-            # 节点文本
-            node_label = self.get_node_label(node)
-            node_type = self.get_node_type(node)
-            text = f"节点: {node_label}<br>类型: {node_type}<br>连接数: {self.graph.degree(node)}"
-            if node in partition_map:
-                if partition_map[node] >= 0:
-                    text += f"<br>分区: {partition_map[node]}"
-                else:
-                    if partition_map[node] == -1:
-                        text += "<br>分区: 未分配"
-                    else:
-                        text += f"<br>临时连通分量: {partition_map[node]}"
-            node_text.append(text)
-        
-        node_trace = go.Scatter(
-            x=node_x, y=node_y,
-            mode="markers",
-            hoverinfo="text",
-            text=node_text,
-            marker=dict(
-                color=node_colors,
-                size=node_sizes,
-                line=dict(width=1, color="#000000")
-            )
-        )
-        
-        # 创建基础图
-        base_fig = go.Figure(
-            data=[edge_trace, node_trace],
-            layout=go.Layout(
-                title="分区迭代过程",
-                showlegend=False,
-                hovermode="closest",
-                margin=dict(b=100, l=20, r=20, t=100),
-                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                annotations=[
-                    dict(
-                        text=explanations[0],
-                        x=0.5,
-                        y=1.05,
-                        xref="paper",
-                        yref="paper",
-                        showarrow=False,
-                        font=dict(size=14, color="black"),
-                        bgcolor="rgba(255, 255, 255, 0.8)",
-                        bordercolor="black",
-                        borderwidth=1,
-                        borderpad=4
-                    ),
-                    dict(
-                        text="<b>MPC算法原理:</b><br>1. 最小化跨分区属性切割<br>2. 保持分区大小平衡<br>3. 迭代优化直至稳定",
-                        x=0.01,
-                        y=0.01,
-                        xref="paper",
-                        yref="paper",
-                        showarrow=False,
-                        font=dict(size=12),
-                        bgcolor="rgba(230, 230, 255, 0.9)",
-                        bordercolor="blue",
-                        borderwidth=1,
-                        borderpad=4,
-                        align="left"
-                    )
-                ]
-            )
-        )
-        
-        # 为每个迭代创建帧
-        for i, mapping in enumerate(history_mappings):
-            node_colors = []
-            node_text = []
-            
-            # 为这一帧创建临时ID到颜色的映射
-            frame_temp_id_to_color = {}
-            
-            # 找出当前帧相对于上一帧的变化节点
-            highlight_nodes = set()
-            if i > 0 and i < num_iterations - 1:  # 只在中间帧高亮节点，最终帧不高亮
-                prev_mapping = history_mappings[i-1]
-                for node in mapping:
-                    if node in prev_mapping:
-                        if mapping[node] != prev_mapping[node]:
-                            highlight_nodes.add(node)
-            
-            for node in self.graph.nodes():
-                # 更新颜色
-                if node in mapping:
-                    partition = mapping[node]
-                    # 如果是刚刚变化的节点，使用高亮颜色
-                    if node in highlight_nodes:
-                        color = "red"  # 高亮变化的节点
-                    elif partition >= 0:
-                        # 正式分区ID
-                        color = self.partition_colors.get(partition, "#000000")
-                    else:
-                        # 负数ID (临时连通分量或未分配)
-                        if partition == -1:
-                            color = "#CCCCCC"  # 未分配
-                        else:
-                            # 为临时ID分配一致的颜色
-                            if partition not in frame_temp_id_to_color:
-                                color_idx = abs(partition) % len(self.temp_colors)
-                                frame_temp_id_to_color[partition] = self.temp_colors[color_idx]
-                            color = frame_temp_id_to_color[partition]
-                else:
-                    color = "#1f77b4"  # default blue
-                    
-                node_colors.append(color)
-                
-                # 更新文本
-                node_label = self.get_node_label(node)
-                node_type = self.get_node_type(node)
-                text = f"节点: {node_label}<br>类型: {node_type}<br>连接数: {self.graph.degree(node)}"
-                if node in mapping:
-                    if mapping[node] >= 0:
-                        text += f"<br>分区: {mapping[node]}"
-                    else:
-                        if mapping[node] == -1:
-                            text += "<br>分区: 未分配"
-                        else:
-                            text += f"<br>临时连通分量: {mapping[node]}"
-                node_text.append(text)
-            
-            # 创建新的节点跟踪对象
-            updated_node_trace = go.Scatter(
-                x=node_x, y=node_y,
-                mode="markers",
-                hoverinfo="text",
-                text=node_text,
-                marker=dict(
-                    color=node_colors,
-                    size=node_sizes,
-                    line=dict(width=1, color="#000000")
-                )
-            )
-            
-            # 创建迭代帧
-            frame = go.Frame(
-                data=[edge_trace, updated_node_trace],
-                name=f"frame_{i}",
-                layout=dict(
-                    title=f"迭代 {i}/{num_iterations-1}",
-                    annotations=[
-                        dict(
-                            text=explanations[i],
-                            x=0.5,
-                            y=1.05,
-                            xref="paper",
-                            yref="paper",
-                            showarrow=False,
-                            font=dict(size=14, color="black"),
-                            bgcolor="rgba(255, 255, 255, 0.8)",
-                            bordercolor="black",
-                            borderwidth=1,
-                            borderpad=4
-                        )
-                    ]
-                )
-            )
-            frames.append(frame)
-        
-        # 添加所有帧
-        base_fig.frames = frames
-        
-        # 添加动画控制
-        base_fig.update_layout(
-            updatemenus=[{
-                "type": "buttons",
-                "showactive": False,
-                "buttons": [
-                    {
-                        "label": "播放",
-                        "method": "animate",
-                        "args": [None, {"frame": {"duration": 1000, "redraw": True}, "fromcurrent": True}]
-                    },
-                    {
-                        "label": "暂停",
-                        "method": "animate",
-                        "args": [[None], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}]
-                    }
-                ],
-                "direction": "left",
-                "x": 0.1,
-                "y": 0,
-                "xanchor": "right",
-                "yanchor": "top"
-            }],
-            sliders=[{
-                "active": 0,
-                "steps": [
-                    {
-                        "label": str(i),
-                        "method": "animate",
-                        "args": [[f"frame_{i}"], {"mode": "immediate"}]
-                    }
-                    for i in range(num_iterations)
-                ],
-                "x": 0.1,
-                "y": 0,
-                "currentvalue": {
-                    "font": {"size": 16},
-                    "prefix": "迭代：",
-                    "visible": True,
-                    "xanchor": "right"
-                },
-                "transition": {"duration": 300, "easing": "cubic-in-out"},
-                "len": 0.9,
-                "pad": {"b": 10, "t": 50}
-            }]
-        )
-        
-        return base_fig 
+        print("动画功能已被禁用，请查看控制台输出的详细迭代过程")
+        return None
+    
+    def get_short_predicate_name(self, predicate):
+        """获取谓词的简短名称，用于显示"""
+        if isinstance(predicate, str) and '/' in predicate:
+            # 移除命名空间前缀，只保留最后部分
+            short_name = predicate.split('/')[-1]
+            # 如果有#号，取#后面的部分
+            if '#' in short_name:
+                short_name = short_name.split('#')[-1]
+            return short_name
+        return str(predicate) 

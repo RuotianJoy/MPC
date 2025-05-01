@@ -115,6 +115,17 @@ class RDFLoader:
             raise ValueError("图未创建，请先加载RDF数据")
         return self.nx_graph
         
+    def get_rdf_graph(self) -> Graph:
+        """
+        获取RDFLib的Graph对象，用于SPARQL查询
+        
+        Returns:
+            RDFLib Graph实例
+        """
+        if not self.rdf_graph:
+            raise ValueError("RDF图未加载，请先加载RDF数据")
+        return self.rdf_graph
+        
     def get_property_statistics(self) -> Dict:
         """
         Get statistics about properties in the graph

@@ -1,0 +1,21 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.org/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX dbo: <http://dbpedia.org/ontology/>
+
+# 复杂查询：查找所有印度出生的演员，他们出演的电影，以及与他们共同出演电影的其他演员
+SELECT ?person ?name ?movie ?movieName ?costar ?costarName
+WHERE {
+  ?person a foaf:Person .
+  ?person rdfs:label ?name .
+  ?person dbo:birthPlace ex:India .
+  ?movie a dbo:Film .
+  ?movie dbo:starring ?person .
+  ?movie rdfs:label ?movieName .
+  ?movie dbo:starring ?costar .
+  ?costar a foaf:Person .
+  ?costar rdfs:label ?costarName .
+  FILTER (?person != ?costar)
+} 

@@ -1,114 +1,78 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ex: <http://example.org/> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dbo: <http://dbpedia.org/ontology/> .
 
-# 人物
-ex:Person1 a foaf:Person ;
-    foaf:name "张三" ;
-    foaf:age "28" ;
-    foaf:knows ex:Person2, ex:Person3 ;
-    ex:livesIn ex:City1 ;
-    ex:worksAt ex:Company1 .
+# 电影实体
+ex:Desi_Magic a dbo:Film ;
+    rdfs:label "Desi Magic" ;
+    ex:id "001" .
+    dbo:starring ex:Ameesha_Patel ;
+    dbo:producer ex:Kuunal_Goomer ;
+    dbo:starring ex:Zayed_Kha .
 
-ex:Person2 a foaf:Person ;
-    foaf:name "李四" ;
-    foaf:age "32" ;
-    foaf:knows ex:Person1, ex:Person4 ;
-    ex:livesIn ex:City1 ;
-    ex:worksAt ex:Company2 .
+ex:Kurbaan a dbo:Film ;
+    rdfs:label "Kurbaan" ;
+    ex:id "008" .
+    dbo:starring ex:Saif_Ali_Khan ;
+    dbo:starring ex:Kareena_Kapoor .
 
-ex:Person3 a foaf:Person ;
-    foaf:name "王五" ;
-    foaf:age "45" ;
-    foaf:knows ex:Person1, ex:Person4 ;
-    ex:livesIn ex:City2 ;
-    ex:worksAt ex:Company1 .
+# 人物实体
+ex:Ameesha_Patel a foaf:Person ;
+    rdfs:label "Ameesha Patel" ;
+    ex:id "002" ;
+    dbo:birthPlace ex:Maharashtra .
 
-ex:Person4 a foaf:Person ;
-    foaf:name "赵六" ;
-    foaf:age "25" ;
-    foaf:knows ex:Person2, ex:Person3 ;
-    ex:livesIn ex:City2 ;
-    ex:worksAt ex:Company3 .
+ex:Zayed_Khan a foaf:Person ;
+    rdfs:label "Zayed Khan" ;
+    ex:id "003" ;
+    dbo:birthPlace ex:India ;
+    dbo:birthPlace ex:Maharashtra .
 
-ex:Person5 a foaf:Person ;
-    foaf:name "钱七" ;
-    foaf:age "50" ;
-    foaf:knows ex:Person4 ;
-    ex:livesIn ex:City3 ;
-    ex:worksAt ex:Company3 .
+ex:Saif_Ali_Khan a foaf:Person ;
+    rdfs:label "Saif Ali Khan" ;
+    ex:id "007" ;
+    dbo:birthPlace ex:India ;
+    dbo:residence ex:Maharashtra ;
+    dbo:spouse ex:Kareena_Kapoor .
 
-# 城市
-ex:City1 a ex:City ;
-    rdfs:label "北京" ;
-    ex:population "2100万" ;
-    ex:hasAttraction ex:Attraction1, ex:Attraction2 .
 
-ex:City2 a ex:City ;
-    rdfs:label "上海" ;
-    ex:population "2400万" ;
-    ex:hasAttraction ex:Attraction3 .
+ex:Kareena_Kapoor a foaf:Person ;
+    rdfs:label "Kareena Kapoor" ;
+    ex:id "009" ;
+    dbo:birthPlace ex:India ;
 
-ex:City3 a ex:City ;
-    rdfs:label "广州" ;
-    ex:population "1500万" ;
-    ex:hasAttraction ex:Attraction4 .
 
-# 公司
-ex:Company1 a ex:Company ;
-    rdfs:label "科技有限公司" ;
-    ex:foundedIn "2005" ;
-    ex:locatedIn ex:City1 .
+ex:Mishti a foaf:Person ;
+    rdfs:label "Mishti" ;
+    ex:id "006" ;
+    dbo:residence ex:Maharashtra .
 
-ex:Company2 a ex:Company ;
-    rdfs:label "金融服务公司" ;
-    ex:foundedIn "1998" ;
-    ex:locatedIn ex:City1 .
+ex:Kuunal_Goomer a foaf:Person ;
+    rdfs:label "Kuunal Goomer" ;
+    ex:id "012" ;
+    dbo:residence ex:India .
 
-ex:Company3 a ex:Company ;
-    rdfs:label "媒体集团" ;
-    ex:foundedIn "2010" ;
-    ex:locatedIn ex:City2 .
+# 地点实体
+ex:Maharashtra a dbo:Place ;
+    rdfs:label "Maharashtra" ;
+    ex:id "004" ;
+    dbo:foundingDate ex:Date_1960_05_01 .
 
-# 景点
-ex:Attraction1 a ex:Attraction ;
-    rdfs:label "长城" ;
-    dc:description "世界文化遗产" ;
-    ex:locatedIn ex:City1 .
+ex:India a dbo:Country ;
+    rdfs:label "India" ;
+    ex:id "010" ;
+    dbo:foundingDate ex:Date_1947_08_15 .
 
-ex:Attraction2 a ex:Attraction ;
-    rdfs:label "故宫" ;
-    dc:description "中国明清两代的皇家宫殿" ;
-    ex:locatedIn ex:City1 .
+# 日期实体
+ex:Date_1960_05_01 a xsd:date ;
+    rdfs:label "1960-05-01" ;
+    ex:id "005" ;
+    rdf:value "1960-05-01"^^xsd:date .
 
-ex:Attraction3 a ex:Attraction ;
-    rdfs:label "外滩" ;
-    dc:description "上海市中心的一个著名旅游景点" ;
-    ex:locatedIn ex:City2 .
-
-ex:Attraction4 a ex:Attraction ;
-    rdfs:label "珠江" ;
-    dc:description "中国第三长河" ;
-    ex:locatedIn ex:City3 .
-
-# 兴趣
-ex:Interest1 a ex:Interest ;
-    rdfs:label "读书" .
-
-ex:Interest2 a ex:Interest ;
-    rdfs:label "旅游" .
-
-ex:Interest3 a ex:Interest ;
-    rdfs:label "摄影" .
-
-ex:Interest4 a ex:Interest ;
-    rdfs:label "音乐" .
-
-# 人物与兴趣的关系
-ex:Person1 ex:hasInterest ex:Interest1, ex:Interest2 .
-ex:Person2 ex:hasInterest ex:Interest2, ex:Interest3 .
-ex:Person3 ex:hasInterest ex:Interest1, ex:Interest4 .
-ex:Person4 ex:hasInterest ex:Interest3, ex:Interest4 .
-ex:Person5 ex:hasInterest ex:Interest1, ex:Interest2, ex:Interest4 . 
+ex:Date_1947_08_15 a xsd:date ;
+    rdfs:label "1947-08-15" ;
+    ex:id "011" ;
+    rdf:value "1947-08-15"^^xsd:date .

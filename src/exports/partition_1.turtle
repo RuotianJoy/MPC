@@ -1,0 +1,44 @@
+@prefix dbo: <http://dbpedia.org/ontology/> .
+@prefix ex: <http://example.org/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:Ameesha_Patel dbo:birthPlace ex:Maharashtra .
+
+ex:Kurbaan a dbo:Film ;
+    rdfs:label "Kurbaan" ;
+    dbo:starring ex:Kareena_Kapoor,
+        ex:Saif_Ali_Khan ;
+    ex:id "008" .
+
+ex:Mishti a foaf:Person ;
+    rdfs:label "Mishti" ;
+    dbo:residence ex:Maharashtra ;
+    ex:id "006" .
+
+ex:Zayed_Khan dbo:birthPlace ex:Maharashtra .
+
+ex:Date_1960_05_01 a xsd:date ;
+    rdfs:label "1960-05-01" ;
+    ex:id "005" ;
+    rdf:value "1960-05-01"^^xsd:date .
+
+ex:Saif_Ali_Khan a foaf:Person ;
+    rdfs:label "Saif Ali Khan" ;
+    dbo:birthPlace ex:India ;
+    dbo:residence ex:Maharashtra ;
+    dbo:spouse ex:Kareena_Kapoor ;
+    ex:id "007" .
+
+ex:Kareena_Kapoor a foaf:Person ;
+    rdfs:label "Kareena Kapoor" ;
+    dbo:birthPlace ex:India ;
+    ex:id "009" .
+
+ex:Maharashtra a dbo:Place ;
+    rdfs:label "Maharashtra" ;
+    dbo:foundingDate ex:Date_1960_05_01 ;
+    ex:id "004" .
+

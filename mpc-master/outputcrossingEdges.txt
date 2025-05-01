@@ -1,0 +1,10 @@
+<http://dbpedia.org/ontology/producer>	1	0
+<http://dbpedia.org/ontology/foundingDate>	2	1
+<http://dbpedia.org/ontology/spouse>	1	0
+<http://dbpedia.org/ontology/starring>	4	1
+<http://dbpedia.org/ontology/birthPlace>	5	1
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#value>	2	0
+<http://www.w3.org/2000/01/rdf-schema#label>	12	0
+<http://dbpedia.org/ontology/residence>	3	0
+<http://example.org/id>	12	0
+<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	12	1

@@ -1,0 +1,47 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.org/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX dbo: <http://dbpedia.org/ontology/>
+
+# 电影详细分析，包括参演演员、制作人和相关信息
+SELECT ?movie ?movieName ?actorCount
+       ?producerName ?producerResidence
+       (GROUP_CONCAT(DISTINCT ?actorName; separator=", ") AS ?actors)
+WHERE {
+  # 获取所有电影
+  ?movie a dbo:Film .
+  ?movie rdfs:label ?movieName .
+  
+  # 计算参演演员数量
+  {
+    SELECT ?movie (COUNT(DISTINCT ?actor) AS ?actorCount)
+    WHERE {
+      ?movie dbo:starring ?actor .
+      ?actor a foaf:Person .
+    }
+    GROUP BY ?movie
+  }
+  
+  # 获取所有参演演员，并将名字拼接成一个字符串
+  OPTIONAL {
+    ?movie dbo:starring ?actor .
+    ?actor rdfs:label ?actorName .
+    ?actor a foaf:Person .
+  }
+  
+  # 获取电影制作人信息
+  OPTIONAL {
+    ?movie dbo:producer ?producer .
+    ?producer rdfs:label ?producerName .
+    
+    # 获取制作人居住地（如果有）
+    OPTIONAL {
+      ?producer dbo:residence ?residence .
+      ?residence rdfs:label ?producerResidence .
+    }
+  }
+}
+GROUP BY ?movie ?movieName ?actorCount ?producerName ?producerResidence
+ORDER BY ?movieName 

@@ -1,0 +1,36 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <http://example.org/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX dbo: <http://dbpedia.org/ontology/>
+
+# 查找演员之间的关系：共同电影和配偶关系
+SELECT ?actor1 ?actor1Name ?actor2 ?actor2Name ?relationship ?movieName
+WHERE {
+  # 获取所有演员
+  ?actor1 a foaf:Person .
+  ?actor2 a foaf:Person .
+  ?actor1 rdfs:label ?actor1Name .
+  ?actor2 rdfs:label ?actor2Name .
+  
+  # 确保我们只比较不同的演员对
+  FILTER(?actor1 != ?actor2)
+  
+  # 查找关系类型
+  {
+    # 共同出演的电影
+    ?movie dbo:starring ?actor1 .
+    ?movie dbo:starring ?actor2 .
+    ?movie rdfs:label ?movieName .
+    BIND("共同出演电影" AS ?relationship)
+  } 
+  UNION 
+  {
+    # 配偶关系
+    ?actor1 dbo:spouse ?actor2 .
+    BIND("配偶" AS ?relationship)
+    BIND("" AS ?movieName)
+  }
+}
+ORDER BY ?actor1Name ?actor2Name ?relationship 

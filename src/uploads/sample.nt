@@ -1,0 +1,39 @@
+@prefix entity: <http://example.org/entity/> .
+@prefix value: <http://example.org/value/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# 定义实体
+entity:Desi_Magic rdf:type entity:Movie .
+entity:Ameesha_Patel rdf:type entity:Actor .
+entity:Zayed_Khan rdf:type entity:Actor .
+entity:Maharashtra rdf:type entity:Region .
+entity:1960-05-01 rdf:type xsd:date .
+entity:Mishti rdf:type entity:City .
+entity:Saif_Ali_Khan rdf:type entity:Actor .
+entity:Kurbaan rdf:type entity:Movie .
+entity:Kareena_Kapoor rdf:type entity:Actor .
+entity:India rdf:type entity:Country .
+entity:1947-08-15 rdf:type xsd:date .
+entity:Kuunal_Goomer rdf:type entity:Producer .
+
+# 定义关系
+entity:Desi_Magic entity:starring entity:Ameesha_Patel .
+entity:Desi_Magic entity:starring entity:Zayed_Khan .
+entity:Desi_Magic entity:producer entity:Kuunal_Goomer .
+
+entity:Ameesha_Patel entity:birthPlace entity:Maharashtra .
+
+entity:Maharashtra entity:foundingDate entity:1960-05-01 .
+entity:Maharashtra entity:birthPlace entity:India .
+entity:Maharashtra entity:residence entity:Mishti .
+
+entity:Saif_Ali_Khan entity:birthPlace entity:India .
+entity:Saif_Ali_Khan entity:spouse entity:Kareena_Kapoor .
+entity:Saif_Ali_Khan entity:starring entity:Kurbaan .
+
+entity:Kareena_Kapoor entity:starring entity:Kurbaan .
+
+entity:India entity:foundingDate entity:1947-08-15 .
+
+entity:Kuunal_Goomer entity:residence entity:India .

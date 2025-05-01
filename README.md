@@ -1,7 +1,6 @@
-# MPC-RDF 图分区与SPARQL查询处理系统
+# MPC-RDF 图分区与SPARQL查询处理-MPC论文复现
 
 这是一个基于MPC(Minimum Property-Cut)算法的RDF图分区与SPARQL查询处理系统，不仅实现了高效的RDF图分区，还提供了完整的SPARQL查询解析、分解和执行功能。系统通过可视化界面直观展示图分区结果与查询处理过程，适用于分布式RDF数据管理和SPARQL查询优化研究。
-
 
 ## 目录
 

